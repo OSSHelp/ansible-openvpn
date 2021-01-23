@@ -1,0 +1,37 @@
+---
+- name: change homedir permissions
+  file:
+    path: /home/openvpn
+    mode: '0750'
+
+- name: copy easy-rsa scripts to /home/openvpn
+  copy:
+    src: /usr/share/easy-rsa
+    dest: /home/openvpn
+    remote_src: yes
+    force: no
+
+- name: copy build-client script to /home/openvpn/easy-rsa
+  copy:
+    src: build-client
+    dest: /home/openvpn/easy-rsa/build-client
+    mode: 0770
+
+- name: create ccd dir
+  file:
+    path: /etc/openvpn/ccd
+    state: directory
+
+- name: create ipp.txt file
+  file:
+    path: /home/openvpn/ipp.txt
+    owner: nobody
+    state: touch
+    force: no
+    modification_time: preserve
+    access_time: preserve
+
+- name: create log dir
+  file:
+    path: /var/log/openvpn
+    state: directory

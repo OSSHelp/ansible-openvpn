@@ -1,0 +1,14 @@
+---
+packages:
+  - openvpn
+  - easy-rsa
+
+easyrsa_vars_conf: /home/openvpn/easy-rsa/vars
+openvpn_conf: /etc/openvpn/openvpn.conf
+
+default_easyrsa_params:
+  - {key: 'export KEY_SIZE', value: '2048'}
+  - {key: 'export KEY_DIR', value: '/home/openvpn/keys'}
+
+easyrsa_params: []
+openvpn_params: []

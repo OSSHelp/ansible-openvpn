@@ -1,0 +1,40 @@
+---
+- name: creating key storage
+  shell: source ./vars && test -d /home/openvpn/keys || ./clean-all
+  args:
+    chdir: /home/openvpn/easy-rsa
+    executable: /bin/bash
+  register: storage_created
+  changed_when: false
+
+- name: generating root cert
+  shell: source ./vars && test -f /home/openvpn/keys/ca.crt || ./pkitool --initca
+  args:
+    chdir: /home/openvpn/easy-rsa
+    executable: /bin/bash
+  register: ca_generated
+  changed_when: false
+
+- name: generating server cert and key
+  shell: source ./vars && test -f /home/openvpn/keys/server.crt || ./pkitool --server server
+  args:
+    chdir: /home/openvpn/easy-rsa
+    executable: /bin/bash
+  register: cert_generated
+  changed_when: false
+
+- name: generating ta.key
+  shell: source ./vars && test -f /home/openvpn/keys/ta.key || openvpn --genkey --secret /home/openvpn/keys/ta.key
+  args:
+    chdir: /home/openvpn/easy-rsa
+    executable: /bin/bash
+  register: ta_generated
+  changed_when: false
+
+- name: generating dh params
+  shell: source ./vars && test -f /home/openvpn/keys/dh*.pem || ./build-dh
+  args:
+    chdir: /home/openvpn/easy-rsa
+    executable: /bin/bash
+  register: dh_generated
+  changed_when: false

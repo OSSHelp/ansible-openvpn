@@ -1,0 +1,20 @@
+---
+- name: create list of easy-rsa params from default list
+  set_fact:
+    finalized_easyrsa_params: "{{ finalized_easyrsa_params|default([]) + [ item ] }}"
+  when: item.key not in easyrsa_params|map(attribute='key')|list
+  loop: "{{ default_easyrsa_params }}"
+  no_log: yes
+
+- name: create finalized list of easy-rsa params
+  set_fact:
+    finalized_easyrsa_params: "{{ finalized_easyrsa_params + easyrsa_params }}"
+  no_log: yes
+
+- name: deploy easy-rsa configuration
+  lineinfile:
+    dest: "{{ easyrsa_vars_conf }}"
+    state: present
+    regexp: '^#?{{ item.key }}'
+    line: '{{ item.key }}={{ item.value }}'
+  loop: "{{ finalized_easyrsa_params }}"

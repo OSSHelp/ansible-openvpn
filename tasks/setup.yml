@@ -1,0 +1,40 @@
+---
+- name: package installation
+  apt:
+    name: "{{ packages }}"
+    update_cache: true
+    cache_valid_time: 86400
+
+- name: enable openvpn service
+  service:
+    name: openvpn@openvpn
+    enabled: yes
+
+- name: systemd unit fix
+  lineinfile:
+    dest: /lib/systemd/system/openvpn@.service
+    state: absent
+    regexp: '^LimitNPROC=10'
+  notify: reload openvpn unit
+
+- name: enable autostart
+  replace:
+    path: /etc/default/openvpn
+    regexp: '^#AUTOSTART="all"'
+    replace: 'AUTOSTART="all"'
+
+- name: create openvpn user
+  user:
+    name: openvpn
+    shell: /bin/nologin
+
+- name: logrotate setup
+  copy:
+    src: logrotate.conf
+    dest: /etc/logrotate.d/openvpn
+
+- name: sysctl configuration
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+  when: ansible_virtualization_type != 'lxc'

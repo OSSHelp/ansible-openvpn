@@ -1,0 +1,23 @@
+---
+- name: copy default config
+  copy:
+    src: openvpn.conf
+    dest: "{{ openvpn_conf }}"
+    force: no
+  notify: restart openvpn service
+
+- name: deploy openvpn configuration
+  lineinfile:
+    dest: "{{ openvpn_conf }}"
+    state: present
+    regexp: '^#?{{ item.key }}'
+    line: '{{ item.key }} {{ item.value }}'
+  loop: "{{ openvpn_params }}"
+
+- name: create crl.pem file
+  file:
+    path: /home/openvpn/keys/crl.pem
+    state: touch
+    force: no
+    modification_time: preserve
+    access_time: preserve

@@ -1,0 +1,69 @@
+#!/bin/bash
+
+server_ip=123.123.123.123
+server_port=61194
+keys_dir=/etc/openvpn/keys
+
+client=$1
+
+echo "Generating config and client key/cert." 
+
+if [ x"${client}" = x ]; then
+    echo "Usage: $0 clientname" 
+    exit 1;
+fi
+
+if [ ! -e "${keys_dir}/${$client.key}" ]; then
+    echo "Generating keys..." 
+    # shellcheck disable=SC1091
+    . vars
+    ./pkitool "${client}"
+#    ./pkitool --pass $client - если нужно, чтобы сертификат был запоролен и при подключении клиент openvpn запрашивал пароль 
+    echo "...keys generated." 
+else
+    echo "Key file keys/$client.key already exists. Skipping." 
+fi
+
+client_key=$(cat "${keys_dir}/${client.key}")
+client_crt=$(sed -n -E -e '/BEGIN CERTIFICATE/,$ p' "${keys_dir}/${client.crt}")
+server_ca=$(cat "${keys_dir}/ca.crt")
+server_ta=$(cat "${keys_dir}/ta.key")
+
+CONFIG_CONTENT="client
+dev tun
+proto udp
+remote $server_ip $server_port
+nobind
+resolv-retry infinite
+
+ca [inline]
+cert [inline]
+key [inline]
+tls-client
+tls-auth [inline] 1
+
+cipher AES-256-CBC
+comp-lzo
+persist-key
+persist-tun
+
+verb 1
+
+<ca>
+$server_ca
+</ca>
+<tls-auth>
+$server_ta
+</tls-auth>
+<cert>
+$client_crt
+</cert>
+<key>
+$client_key
+</key>
+" 
+
+test -d confs || mkdir confs
+echo "$CONFIG_CONTENT" > confs/"${client}".conf
+echo "Config for $client with inline certs, key in confs/$client.conf" 
+echo "Done"
